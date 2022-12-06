@@ -28,17 +28,29 @@ var startAppPlugin = (directory) => {
     name: "react-gtk-start-app-esbuild-plugin",
     setup(build) {
       build.onEnd(() => __async(this, null, function* () {
+        var _a, _b;
         cleanup();
         const child = spawn("gjs", ["-m", "./index.js"], {
           stdio: "inherit",
           shell: true,
           cwd: directory
         });
+        const onChildOutput = (data) => {
+          console.log(data.toString());
+        };
+        const onChildError = (data) => {
+          console.error(data.toString());
+        };
         const onExit = () => {
           process.exit();
         };
+        (_a = child.stdout) == null ? void 0 : _a.on("data", onChildOutput);
+        (_b = child.stderr) == null ? void 0 : _b.on("data", onChildError);
         child.on("exit", onExit);
         cleanup = () => {
+          var _a2, _b2;
+          (_a2 = child.stdout) == null ? void 0 : _a2.off("data", onChildOutput);
+          (_b2 = child.stderr) == null ? void 0 : _b2.off("data", onChildError);
           child.off("exit", onExit);
           child.kill();
         };

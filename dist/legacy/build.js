@@ -49,6 +49,7 @@ __export(build_exports, {
   build: () => build
 });
 module.exports = __toCommonJS(build_exports);
+var import_chalk = __toESM(require("chalk"));
 var import_clify = require("clify.js");
 var import_esbuild = __toESM(require("esbuild"));
 var import_fs = __toESM(require("fs"));
@@ -59,6 +60,22 @@ var import_start_app_plugin = require("./start-app-esbuild-plugin/start-app-plug
 var isObject = (o) => typeof o === "object" && o != null;
 var isValidationError = (e) => {
   return isObject(e) && e instanceof Error && "fieldPath" in e || false;
+};
+var handleBuildError = (e) => {
+  if (isValidationError(e)) {
+    console.error(
+      import_chalk.default.redBright(
+        `Config file is invalid. Property "${import_chalk.default.yellowBright(
+          e.fieldPath
+        )}" is incorrect.`
+      )
+    );
+  } else if (isObject(e) && e instanceof Error) {
+    console.error("Build failed due to an error: ", import_chalk.default.redBright(e.message));
+  } else {
+    console.error(import_chalk.default.redBright("Build failed due to an unknown error."));
+  }
+  process.exit(1);
 };
 var WatchArgument = import_clify.Argument.define({
   flagChar: "-w",
@@ -87,6 +104,11 @@ function build() {
                   throw new Error("No config file found.");
                 }
                 const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename));
+                if (watch.value) {
+                  console.log(import_chalk.default.blueBright("Building in watch mode..."));
+                } else {
+                  console.log(import_chalk.default.blueBright("Building..."));
+                }
                 yield import_esbuild.default.build({
                   target: "es6",
                   format: "esm",
@@ -104,17 +126,11 @@ function build() {
                   bundle: true,
                   watch: watch.value
                 });
-              } catch (e) {
-                if (isValidationError(e)) {
-                  console.error(
-                    `Config file is invalid. Property "${e.fieldPath}" is incorrect.`
-                  );
-                } else if (isObject(e) && e instanceof Error) {
-                  console.error("Build failed due to an error: ", e.message);
-                } else {
-                  console.error("Build failed due to an unknown error.");
+                if (!watch.value) {
+                  console.log(import_chalk.default.greenBright("Build completed."));
                 }
-                process.exit(1);
+              } catch (e) {
+                handleBuildError(e);
               }
             });
           }
@@ -137,6 +153,11 @@ function build() {
                   throw new Error("No config file found.");
                 }
                 const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename));
+                if (watch.value) {
+                  console.log(import_chalk.default.blueBright("Starting in watch mode."));
+                } else {
+                  console.log(import_chalk.default.blueBright("Starting."));
+                }
                 yield import_esbuild.default.build({
                   target: "es6",
                   format: "esm",
@@ -156,16 +177,7 @@ function build() {
                   watch: watch.value
                 });
               } catch (e) {
-                if (isValidationError(e)) {
-                  console.error(
-                    `Config file is invalid. Property "${e.fieldPath}" is incorrect.`
-                  );
-                } else if (isObject(e) && e instanceof Error) {
-                  console.error("Build failed due to an error: ", e.message);
-                } else {
-                  console.error("Build failed due to an unknown error.");
-                }
-                process.exit(1);
+                handleBuildError(e);
               }
             });
           }
