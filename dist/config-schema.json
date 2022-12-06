@@ -1,0 +1,121 @@
+{
+  "type": "object",
+  "properties": {
+    "entrypoint": {
+      "description": "The entrypoint file of the application.\n\nCan be a relative path from the project root or an absolute path.",
+      "type": "string"
+    },
+    "outDir": {
+      "description": "The output directory for the generated bundle.\n\nCan be a relative path from the project root or an absolute path.",
+      "type": "string"
+    },
+    "externalPackages": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string"
+        }
+      ],
+      "description": "An array of packages that should be excluded from the bundle.\n\nThis is useful for packages that are already installed on the system and should not be bundled."
+    },
+    "minify": {
+      "description": "Whether the generated bundle should be minified.\n\nThis is useful for production builds.",
+      "type": "boolean"
+    },
+    "treeShake": {
+      "type": "boolean"
+    },
+    "esbuildPlugins": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "Esbuild plugins. Plugins can only be added via a JavaScript config file. If you are using a JSON config file and want to add a plugin, you will need to create a `react-gtk.config.js` file and use that instead."
+    },
+    "giVersions": {
+      "type": "object",
+      "properties": {
+        "Gtk": {
+          "type": "string",
+          "enum": [
+            "3.0"
+          ]
+        },
+        "Gdk": {
+          "type": "string"
+        },
+        "Gio": {
+          "type": "string"
+        },
+        "GLib": {
+          "type": "string"
+        },
+        "GObject": {
+          "type": "string"
+        },
+        "Pango": {
+          "type": "string"
+        },
+        "Atk": {
+          "type": "string"
+        },
+        "Cairo": {
+          "type": "string"
+        },
+        "GModule": {
+          "type": "string"
+        },
+        "GdkPixbuf": {
+          "type": "string"
+        },
+        "Cally": {
+          "type": "string"
+        },
+        "Clutter": {
+          "type": "string"
+        },
+        "ClutterX11": {
+          "type": "string"
+        },
+        "Cogl": {
+          "type": "string"
+        },
+        "Graphene": {
+          "type": "string"
+        },
+        "Gst": {
+          "type": "string"
+        },
+        "HarfBuzz": {
+          "type": "string"
+        },
+        "Soup": {
+          "type": "string"
+        },
+        "cairo": {
+          "type": "string"
+        },
+        "xlib": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "description": "The versions of the builtin libraries from the `gi://` namespace, that should be used in the generated bundle.",
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "entrypoint",
+    "outDir"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-06/schema#"
+}
