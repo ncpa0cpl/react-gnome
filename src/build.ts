@@ -38,12 +38,15 @@ const handleBuildError = (e: unknown) => {
 const getPlugins = (
   type: "build" | "start",
   config: Config,
-  watch: Argument<"boolean", false>
+  watch: Argument<"boolean", false>,
+  debug = false
 ) => {
-  const plugins = [reactGtkPlugin(config)];
+  const plugins = [reactGtkPlugin(config, debug)];
 
   if (type === "start") {
-    plugins.push(startAppPlugin(path.resolve(process.cwd(), config.outDir)));
+    plugins.push(
+      startAppPlugin(path.resolve(process.cwd(), config.outDir), debug)
+    );
   }
 
   if (watch.value) {
@@ -68,6 +71,13 @@ const BuildModeArgument = Argument.define({
   keyword: "--mode",
   dataType: "string",
   description: "The build mode, either 'development' or 'production'.",
+});
+
+const DebugArgument = Argument.define({
+  flagChar: "-d",
+  keyword: "--debug",
+  dataType: "boolean",
+  description: "Enable debugging.",
 });
 
 export async function build() {
@@ -133,6 +143,7 @@ export async function build() {
     main.addSubCommand("start", () => {
       const watch = new WatchArgument();
       const mode = new BuildModeArgument();
+      const debug = new DebugArgument();
 
       return {
         commandDescription: "Build, bundle and open the app.",
@@ -165,7 +176,7 @@ export async function build() {
               format: "esm",
               entryPoints: [path.resolve(cwd, config.entrypoint)],
               outfile: path.resolve(cwd, config.outDir, "index.js"),
-              plugins: getPlugins("start", config, watch),
+              plugins: getPlugins("start", config, watch, debug.value),
               external: config.externalPackages,
               minify: config.minify ?? (isDev ? false : true),
               treeShaking: config.treeShake ?? (isDev ? false : true),

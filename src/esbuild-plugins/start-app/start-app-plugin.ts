@@ -1,12 +1,26 @@
+import type { ChildProcess } from "child_process";
 import { spawn } from "child_process";
 import type esbuild from "esbuild";
 
-export const startAppPlugin = (directory: string) => {
+export const startAppPlugin = (directory: string, debug: boolean) => {
   let cleanup = () => {};
 
   return {
     name: "react-gtk-start-app-esbuild-plugin",
     setup(build: esbuild.PluginBuild) {
+      let debuggerProcess: ChildProcess | undefined = undefined;
+
+      if (debug) {
+        debuggerProcess = spawn("npx", ["react-gtk-debugger"], {
+          stdio: "inherit",
+          cwd: directory,
+        });
+
+        debuggerProcess.stdout?.on("data", (data) => {
+          console.log(data.toString());
+        });
+      }
+
       build.onEnd(async () => {
         cleanup();
 
@@ -27,6 +41,7 @@ export const startAppPlugin = (directory: string) => {
 
         const onExit = () => {
           process.kill(process.pid, "SIGINT");
+          debuggerProcess?.kill();
         };
 
         child.stdout?.on("data", onChildOutput);

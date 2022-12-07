@@ -1,7 +1,11 @@
 {
   "name": "react-gtk",
   "packageManager": "yarn@3.2.4",
-  "bin": "./bin/react-gtk.sh",
+  "bin": {
+    "react-gtk": "./bin/react-gtk.sh",
+    "react-gtk-debugger": "./bin/react-gtk-debugger.mjs",
+    "react-gtk-debug-breakpoint": "./bin/react-gtk-debug-breakpoint.mjs"
+  },
   "main": "./dist/legacy/index.js",
   "types": "./dist/types/index.d.ts",
   "exports": {
@@ -21,6 +25,7 @@
     "@swc/core": "^1.3.21",
     "@swc/jest": "^0.2.23",
     "@types/jest": "^29.2.4",
+    "@types/node-ipc": "^9.2.0",
     "@typescript-eslint/eslint-plugin": "^5.45.1",
     "@typescript-eslint/parser": "^5.45.1",
     "eslint": "^8.29.0",
@@ -58,7 +63,9 @@
     "chalk": "^4.1.2",
     "clify.js": "ncpa0cpl/clify.js#0.0.1",
     "dilswer": "^1.4.1",
-    "esbuild": "^0.15.18"
+    "esbuild": "^0.15.18",
+    "node-gtk": "^0.11.0",
+    "node-ipc": "^11.1.0"
   },
   "peerDependencies": {
     "ts-node": "^10.9.0"

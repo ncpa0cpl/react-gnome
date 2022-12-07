@@ -1,9 +1,10 @@
 import type esbuild from "esbuild";
 import fs from "fs/promises";
 import type { Config } from "../../config/config-schema";
+import { gjsDebuggerBinding } from "../../debugger/gjs-bindings/debugger";
 import { getDefaultGiImports } from "./default-gi-imports";
 
-export const reactGtkPlugin = (config: Config) => {
+export const reactGtkPlugin = (config: Config, debug: boolean) => {
   return {
     name: "react-gtk-esbuild-plugin",
     setup(build: esbuild.PluginBuild) {
@@ -32,10 +33,18 @@ export const reactGtkPlugin = (config: Config) => {
 
         const imports = getDefaultGiImports(config.giVersions);
 
-        await fs.writeFile(
-          build.initialOptions.outfile!,
-          [imports, outputFile].join("\n")
-        );
+        const fileParts = [imports];
+
+        if (debug) {
+          const debuggerCode = gjsDebuggerBinding(
+            "npx react-gtk-debug-breakpoint"
+          );
+          fileParts.push(debuggerCode);
+        }
+
+        fileParts.push(outputFile);
+
+        await fs.writeFile(build.initialOptions.outfile!, fileParts.join("\n"));
       });
     },
   };
