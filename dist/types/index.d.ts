@@ -1,2 +1,1 @@
-export * from "./build";
-export type { Config } from "./config/config-schema";
+export type { Config as BuildConfig } from "./config/config-schema";

@@ -38,19 +38,22 @@ var ConfigSchema = DataType.RecordOf({
   )
 });
 ConfigSchema.recordOf.entrypoint.setDescription(
-  "The entrypoint file of the application.\n\nCan be a relative path from the project root or an absolute path."
+  "The entrypoint file of the application.\nCan be a relative path from the project root or an absolute path."
 );
 ConfigSchema.recordOf.outDir.setDescription(
-  "The output directory for the generated bundle.\n\nCan be a relative path from the project root or an absolute path."
+  "The output directory for the generated bundle.\nCan be a relative path from the project root or an absolute path."
 );
 ConfigSchema.recordOf.externalPackages.type.setDescription(
-  "An array of packages that should be excluded from the bundle.\n\nThis is useful for packages that are already installed on the system and should not be bundled."
+  "An array of packages that should be excluded from the bundle.\nThis is useful for packages that are already installed on the system and should not be bundled."
 );
 ConfigSchema.recordOf.minify.type.setDescription(
-  "Whether the generated bundle should be minified.\n\nThis is useful for production builds."
+  "Whether the generated bundle should be minified.\nThis is useful for production builds.\nBy default is enabled in `production` mode and disabled in `development` mode."
+);
+ConfigSchema.recordOf.treeShake.type.setDescription(
+  "Whether unused code should be removed from the bundle.\nThis is useful for production builds.\nBy default is enabled in `production` mode and disabled in `development` mode."
 );
 ConfigSchema.recordOf.esbuildPlugins.type.setDescription(
-  "Esbuild plugins. Plugins can only be added via a JavaScript config file. If you are using a JSON config file and want to add a plugin, you will need to create a `react-gtk.config.js` file and use that instead."
+  "Esbuild plugins.\nPlugins can only be added via a JavaScript config file. If you are using a JSON config file and want to add a plugin, you will need to create a `react-gnome.config.js` file and use that instead."
 );
 ConfigSchema.recordOf.giVersions.type.setDescription(
   "The versions of the builtin libraries from the `gi://` namespace, that should be used in the generated bundle."

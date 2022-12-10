@@ -1,4 +1,7 @@
-export declare function parseConfig(filePath: string): Promise<{
+export declare type ConfigContext = {
+    mode: "production" | "development";
+};
+export declare function parseConfig(filePath: string, context: ConfigContext): Promise<{
     externalPackages?: string[] | undefined;
     minify?: boolean | undefined;
     treeShake?: boolean | undefined;
