@@ -43,8 +43,16 @@ __export(eval_js_config_cjs_exports, {
   evalJsConfigFile: () => evalJsConfigFile
 });
 module.exports = __toCommonJS(eval_js_config_cjs_exports);
+var path = require("path");
+var getDefault = (module2) => typeof module2 === "object" && "default" in module2 ? module2.default : module2;
 var evalJsConfigFile = (config) => __async(void 0, null, function* () {
-  const defaultExport = require(config);
+  const ext = path.extname(config);
+  if (ext === ".mjs" || ext === ".mts") {
+    throw new Error(
+      `Invalid config file type: '${ext}'. react-gnome is running in CommonJS mode and can accept only configs in CommonJS module format. To use ESModules, set the 'type' field in your package.json to 'module'.`
+    );
+  }
+  const defaultExport = getDefault(require(config));
   if (typeof defaultExport === "function") {
     return defaultExport;
   }

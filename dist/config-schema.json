@@ -2,11 +2,11 @@
   "type": "object",
   "properties": {
     "entrypoint": {
-      "description": "The entrypoint file of the application.\n\nCan be a relative path from the project root or an absolute path.",
+      "description": "The entrypoint file of the application.\nCan be a relative path from the project root or an absolute path.",
       "type": "string"
     },
     "outDir": {
-      "description": "The output directory for the generated bundle.\n\nCan be a relative path from the project root or an absolute path.",
+      "description": "The output directory for the generated bundle.\nCan be a relative path from the project root or an absolute path.",
       "type": "string"
     },
     "externalPackages": {
@@ -16,13 +16,14 @@
           "type": "string"
         }
       ],
-      "description": "An array of packages that should be excluded from the bundle.\n\nThis is useful for packages that are already installed on the system and should not be bundled."
+      "description": "An array of packages that should be excluded from the bundle.\nThis is useful for packages that are already installed on the system and should not be bundled."
     },
     "minify": {
-      "description": "Whether the generated bundle should be minified.\n\nThis is useful for production builds.",
+      "description": "Whether the generated bundle should be minified.\nThis is useful for production builds.\nBy default is enabled in `production` mode and disabled in `development` mode.",
       "type": "boolean"
     },
     "treeShake": {
+      "description": "Whether unused code should be removed from the bundle.\nThis is useful for production builds.\nBy default is enabled in `production` mode and disabled in `development` mode.",
       "type": "boolean"
     },
     "esbuildPlugins": {
@@ -38,7 +39,7 @@
           "additionalProperties": false
         }
       ],
-      "description": "Esbuild plugins. Plugins can only be added via a JavaScript config file. If you are using a JSON config file and want to add a plugin, you will need to create a `react-gtk.config.js` file and use that instead."
+      "description": "Esbuild plugins.\nPlugins can only be added via a JavaScript config file. If you are using a JSON config file and want to add a plugin, you will need to create a `react-gnome.config.js` file and use that instead."
     },
     "giVersions": {
       "type": "object",

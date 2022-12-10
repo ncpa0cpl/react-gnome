@@ -33,22 +33,22 @@ function parseJsonConfig(filePath) {
     return config;
   });
 }
-function parseJsConfig(filePath) {
+function parseJsConfig(filePath, context) {
   return __async(this, null, function* () {
     const getConfig = yield evalJsConfigFile(filePath);
-    const config = getConfig();
+    const config = getConfig(context);
     assertDataType(ConfigSchema, config);
     return config;
   });
 }
-function parseConfig(filePath) {
+function parseConfig(filePath, context) {
   const p = path.parse(filePath);
   if (p.ext === ".json") {
     return parseJsonConfig(filePath);
-  } else if ([".js", ".cjs", ".mjs"].includes(p.ext)) {
-    return parseJsConfig(filePath);
+  } else if ([".js", ".cjs", ".mjs", ".ts", ".cts", ".mts"].includes(p.ext)) {
+    return parseJsConfig(filePath, context);
   } else {
-    throw new Error(`Unsupported config file type: ${p.ext}`);
+    throw new Error(`Unsupported config file type: '${p.ext}'.`);
   }
 }
 export {

@@ -44,7 +44,7 @@ var findProjectRoot = () => __async(void 0, null, function* () {
     location = path.resolve(location, "..");
   }
 });
-var CONFIG_FILE_NAME = "react-gtk.config.json";
+var CONFIG_FILE_NAME = "react-gnome.config.json";
 var addConfigSchema = () => __async(void 0, null, function* () {
   const cwd = yield findProjectRoot();
   const vscodeDir = path.resolve(cwd, ".vscode");

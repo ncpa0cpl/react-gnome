@@ -55,8 +55,9 @@ var import_esbuild = __toESM(require("esbuild"));
 var import_fs = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
 var import_parse_config = require("./config/parse-config.cjs");
-var import_react_gtk_plugin = require("./react-gtk-esbuild-plugin/react-gtk-plugin.cjs");
-var import_start_app_plugin = require("./start-app-esbuild-plugin/start-app-plugin.cjs");
+var import_react_gnome_plugin = require("./esbuild-plugins/react-gnome/react-gnome-plugin.cjs");
+var import_start_app_plugin = require("./esbuild-plugins/start-app/start-app-plugin.cjs");
+var import_watch_logger_plugin = require("./esbuild-plugins/watch-logger/watch-logger-plugin.cjs");
 var isObject = (o) => typeof o === "object" && o != null;
 var isValidationError = (e) => {
   return isObject(e) && e instanceof Error && "fieldPath" in e || false;
@@ -77,33 +78,56 @@ var handleBuildError = (e) => {
   }
   process.exit(1);
 };
+var getPlugins = (type, config, watch) => {
+  const plugins = [(0, import_react_gnome_plugin.reactGnomePlugin)(config)];
+  if (type === "start") {
+    plugins.push((0, import_start_app_plugin.startAppPlugin)(import_path.default.resolve(process.cwd(), config.outDir)));
+  }
+  if (watch.value) {
+    plugins.push((0, import_watch_logger_plugin.watchLoggerPlugin)());
+  }
+  if (config.esbuildPlugins) {
+    plugins.push(...config.esbuildPlugins);
+  }
+  return plugins;
+};
 var WatchArgument = import_clify.Argument.define({
   flagChar: "-w",
   keyword: "--watch",
   dataType: "boolean"
 });
+var BuildModeArgument = import_clify.Argument.define({
+  flagChar: "-m",
+  keyword: "--mode",
+  dataType: "string",
+  description: "The build mode, either 'development' or 'production'."
+});
 function build() {
   return __async(this, null, function* () {
     (0, import_clify.configure)((main) => {
-      main.setDisplayName("react-gtk");
+      main.setDisplayName("react-gnome");
       main.setDescription("Build GTK apps with React.");
       main.addSubCommand("build", () => {
         const watch = new WatchArgument();
+        const mode = new BuildModeArgument();
         return {
           commandDescription: "Build and bundle the app into a single file.",
           run() {
             return __async(this, null, function* () {
-              var _a2;
+              var _a2, _b;
               try {
+                const isDev = mode.value === "development";
                 const cwd = process.cwd();
                 const cwdFiles = import_fs.default.readdirSync(cwd);
                 const filename = cwdFiles.find(
-                  (f) => f.startsWith("react-gtk.config.")
+                  (f) => f.startsWith("react-gnome.config.")
                 );
                 if (!filename) {
                   throw new Error("No config file found.");
                 }
-                const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename));
+                const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename), {
+                  mode: isDev ? "development" : "production"
+                });
                 if (watch.value) {
                   console.log(import_chalk.default.blueBright("Building in watch mode..."));
                 } else {
@@ -114,13 +138,10 @@ function build() {
                   format: "esm",
                   entryPoints: [import_path.default.resolve(cwd, config.entrypoint)],
                   outfile: import_path.default.resolve(cwd, config.outDir, "index.js"),
-                  plugins: [
-                    (0, import_react_gtk_plugin.reactGtkPlugin)(config),
-                    ...(_a2 = config.esbuildPlugins) != null ? _a2 : []
-                  ],
+                  plugins: getPlugins("build", config, watch),
                   external: config.externalPackages,
-                  minify: config.minify,
-                  treeShaking: config.treeShake,
+                  minify: (_a2 = config.minify) != null ? _a2 : isDev ? false : true,
+                  treeShaking: (_b = config.treeShake) != null ? _b : isDev ? false : true,
                   jsx: "transform",
                   keepNames: true,
                   bundle: true,
@@ -138,21 +159,25 @@ function build() {
       });
       main.addSubCommand("start", () => {
         const watch = new WatchArgument();
+        const mode = new BuildModeArgument();
         return {
           commandDescription: "Build, bundle and open the app.",
           run() {
             return __async(this, null, function* () {
-              var _a2;
+              var _a2, _b;
               try {
+                const isDev = mode.value === "development";
                 const cwd = process.cwd();
                 const cwdFiles = import_fs.default.readdirSync(cwd);
                 const filename = cwdFiles.find(
-                  (f) => f.startsWith("react-gtk.config.")
+                  (f) => f.startsWith("react-gnome.config.")
                 );
                 if (!filename) {
                   throw new Error("No config file found.");
                 }
-                const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename));
+                const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename), {
+                  mode: isDev ? "development" : "production"
+                });
                 if (watch.value) {
                   console.log(import_chalk.default.blueBright("Starting in watch mode."));
                 } else {
@@ -163,14 +188,10 @@ function build() {
                   format: "esm",
                   entryPoints: [import_path.default.resolve(cwd, config.entrypoint)],
                   outfile: import_path.default.resolve(cwd, config.outDir, "index.js"),
-                  plugins: [
-                    (0, import_react_gtk_plugin.reactGtkPlugin)(config),
-                    (0, import_start_app_plugin.startAppPlugin)(import_path.default.resolve(cwd, config.outDir)),
-                    ...(_a2 = config.esbuildPlugins) != null ? _a2 : []
-                  ],
+                  plugins: getPlugins("start", config, watch),
                   external: config.externalPackages,
-                  minify: config.minify,
-                  treeShaking: config.treeShake,
+                  minify: (_a2 = config.minify) != null ? _a2 : isDev ? false : true,
+                  treeShaking: (_b = config.treeShake) != null ? _b : isDev ? false : true,
                   jsx: "transform",
                   keepNames: true,
                   bundle: true,
