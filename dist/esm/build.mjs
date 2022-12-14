@@ -23,45 +23,12 @@ var __async = (__this, __arguments, generator) => {
 import chalk from "chalk";
 import { Argument, configure } from "clify.js";
 import esbuild from "esbuild";
-import fs from "fs";
 import path from "path";
-import { parseConfig } from "./config/parse-config.mjs";
-import { reactGnomePlugin } from "./esbuild-plugins/react-gnome/react-gnome-plugin.mjs";
 import { startAppPlugin } from "./esbuild-plugins/start-app/start-app-plugin.mjs";
-import { watchLoggerPlugin } from "./esbuild-plugins/watch-logger/watch-logger-plugin.mjs";
-var isObject = (o) => typeof o === "object" && o != null;
-var isValidationError = (e) => {
-  return isObject(e) && e instanceof Error && "fieldPath" in e || false;
-};
-var handleBuildError = (e) => {
-  if (isValidationError(e)) {
-    console.error(
-      chalk.redBright(
-        `Config file is invalid. Property "${chalk.yellowBright(
-          e.fieldPath
-        )}" is incorrect.`
-      )
-    );
-  } else if (isObject(e) && e instanceof Error) {
-    console.error("Build failed due to an error: ", chalk.redBright(e.message));
-  } else {
-    console.error(chalk.redBright("Build failed due to an unknown error."));
-  }
-  process.exit(1);
-};
-var getPlugins = (type, config, watch) => {
-  const plugins = [reactGnomePlugin(config)];
-  if (type === "start") {
-    plugins.push(startAppPlugin(path.resolve(process.cwd(), config.outDir)));
-  }
-  if (watch.value) {
-    plugins.push(watchLoggerPlugin());
-  }
-  if (config.esbuildPlugins) {
-    plugins.push(...config.esbuildPlugins);
-  }
-  return plugins;
-};
+import { getPlugins } from "./utils/get-plugins.mjs";
+import { getPolyfills } from "./utils/get-polyfills.mjs";
+import { handleProgramError } from "./utils/handle-program-error.mjs";
+import { readConfig } from "./utils/read-config.mjs";
 var WatchArgument = Argument.define({
   flagChar: "-w",
   keyword: "--watch",
@@ -73,111 +40,132 @@ var BuildModeArgument = Argument.define({
   dataType: "string",
   description: "The build mode, either 'development' or 'production'."
 });
+var Program = class {
+  constructor() {
+    this.cwd = process.cwd();
+    this.args = {
+      watch: new WatchArgument(),
+      mode: new BuildModeArgument()
+    };
+  }
+  get isDev() {
+    return this.args.mode.value === "development";
+  }
+  get watchMode() {
+    return this.args.watch.value || false;
+  }
+  run() {
+    return __async(this, null, function* () {
+      try {
+        this.config = yield readConfig(this);
+        return yield this.main(this);
+      } catch (e) {
+        handleProgramError(e);
+      }
+    });
+  }
+  runWith(args, config, workingDir) {
+    return __async(this, null, function* () {
+      try {
+        if (workingDir) {
+          this.cwd = workingDir;
+        }
+        this.config = config;
+        for (const [key, value] of Object.entries(args)) {
+          const arg = this.args[key];
+          if (arg) {
+            arg.setDefault(value);
+          }
+        }
+        Object.freeze(this);
+        Object.freeze(this.args);
+        Object.freeze(this.config);
+        return yield this.main(this);
+      } catch (e) {
+        handleProgramError(e);
+      }
+    });
+  }
+};
+var BuildProgram = class extends Program {
+  additionalPlugins() {
+    return {};
+  }
+  main() {
+    return __async(this, null, function* () {
+      var _a, _b;
+      if (this.watchMode) {
+        console.log(chalk.blueBright("Building in watch mode..."));
+      } else {
+        console.log(chalk.blueBright("Building..."));
+      }
+      yield esbuild.build({
+        target: "es6",
+        format: "esm",
+        inject: getPolyfills(this),
+        entryPoints: [path.resolve(this.cwd, this.config.entrypoint)],
+        outfile: path.resolve(this.cwd, this.config.outDir, "index.js"),
+        plugins: getPlugins(this),
+        external: this.config.externalPackages,
+        minify: (_a = this.config.minify) != null ? _a : this.isDev ? false : true,
+        treeShaking: (_b = this.config.treeShake) != null ? _b : this.isDev ? false : true,
+        jsx: "transform",
+        keepNames: true,
+        bundle: true,
+        watch: this.watchMode
+      });
+      if (!this.watchMode) {
+        console.log(chalk.greenBright("Build completed."));
+      }
+    });
+  }
+};
+var StartProgram = class extends Program {
+  additionalPlugins() {
+    return {
+      before: [startAppPlugin(path.resolve(this.cwd, this.config.outDir))]
+    };
+  }
+  main() {
+    return __async(this, null, function* () {
+      var _a, _b;
+      if (this.watchMode) {
+        console.log(chalk.blueBright("Starting in watch mode."));
+      } else {
+        console.log(chalk.blueBright("Starting."));
+      }
+      yield esbuild.build({
+        target: "es6",
+        format: "esm",
+        inject: getPolyfills(this),
+        entryPoints: [path.resolve(this.cwd, this.config.entrypoint)],
+        outfile: path.resolve(this.cwd, this.config.outDir, "index.js"),
+        plugins: getPlugins(this),
+        external: this.config.externalPackages,
+        minify: (_a = this.config.minify) != null ? _a : this.isDev ? false : true,
+        treeShaking: (_b = this.config.treeShake) != null ? _b : this.isDev ? false : true,
+        jsx: "transform",
+        keepNames: true,
+        bundle: true,
+        watch: this.watchMode
+      });
+    });
+  }
+};
 function build() {
   return __async(this, null, function* () {
     configure((main) => {
       main.setDisplayName("react-gnome");
       main.setDescription("Build GTK apps with React.");
-      main.addSubCommand("build", () => {
-        const watch = new WatchArgument();
-        const mode = new BuildModeArgument();
-        return {
-          commandDescription: "Build and bundle the app into a single file.",
-          run() {
-            return __async(this, null, function* () {
-              var _a2, _b;
-              try {
-                const isDev = mode.value === "development";
-                const cwd = process.cwd();
-                const cwdFiles = fs.readdirSync(cwd);
-                const filename = cwdFiles.find(
-                  (f) => f.startsWith("react-gnome.config.")
-                );
-                if (!filename) {
-                  throw new Error("No config file found.");
-                }
-                const config = yield parseConfig(path.join(cwd, filename), {
-                  mode: isDev ? "development" : "production"
-                });
-                if (watch.value) {
-                  console.log(chalk.blueBright("Building in watch mode..."));
-                } else {
-                  console.log(chalk.blueBright("Building..."));
-                }
-                yield esbuild.build({
-                  target: "es6",
-                  format: "esm",
-                  entryPoints: [path.resolve(cwd, config.entrypoint)],
-                  outfile: path.resolve(cwd, config.outDir, "index.js"),
-                  plugins: getPlugins("build", config, watch),
-                  external: config.externalPackages,
-                  minify: (_a2 = config.minify) != null ? _a2 : isDev ? false : true,
-                  treeShaking: (_b = config.treeShake) != null ? _b : isDev ? false : true,
-                  jsx: "transform",
-                  keepNames: true,
-                  bundle: true,
-                  watch: watch.value
-                });
-                if (!watch.value) {
-                  console.log(chalk.greenBright("Build completed."));
-                }
-              } catch (e) {
-                handleBuildError(e);
-              }
-            });
-          }
-        };
-      });
-      main.addSubCommand("start", () => {
-        const watch = new WatchArgument();
-        const mode = new BuildModeArgument();
-        return {
-          commandDescription: "Build, bundle and open the app.",
-          run() {
-            return __async(this, null, function* () {
-              var _a2, _b;
-              try {
-                const isDev = mode.value === "development";
-                const cwd = process.cwd();
-                const cwdFiles = fs.readdirSync(cwd);
-                const filename = cwdFiles.find(
-                  (f) => f.startsWith("react-gnome.config.")
-                );
-                if (!filename) {
-                  throw new Error("No config file found.");
-                }
-                const config = yield parseConfig(path.join(cwd, filename), {
-                  mode: isDev ? "development" : "production"
-                });
-                if (watch.value) {
-                  console.log(chalk.blueBright("Starting in watch mode."));
-                } else {
-                  console.log(chalk.blueBright("Starting."));
-                }
-                yield esbuild.build({
-                  target: "es6",
-                  format: "esm",
-                  entryPoints: [path.resolve(cwd, config.entrypoint)],
-                  outfile: path.resolve(cwd, config.outDir, "index.js"),
-                  plugins: getPlugins("start", config, watch),
-                  external: config.externalPackages,
-                  minify: (_a2 = config.minify) != null ? _a2 : isDev ? false : true,
-                  treeShaking: (_b = config.treeShake) != null ? _b : isDev ? false : true,
-                  jsx: "transform",
-                  keepNames: true,
-                  bundle: true,
-                  watch: watch.value
-                });
-              } catch (e) {
-                handleBuildError(e);
-              }
-            });
-          }
-        };
-      });
+      const buildCommand = main.addSubCommand("build", () => new BuildProgram());
+      const startCommand = main.addSubCommand("start", () => new StartProgram());
+      buildCommand.setDescription("Build and bundle the app into a single file.");
+      startCommand.setDescription("Build, bundle and open the app.");
     });
   });
 }
 export {
+  BuildProgram,
+  StartProgram,
   build
 };

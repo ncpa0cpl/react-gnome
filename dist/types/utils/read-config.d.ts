@@ -1,7 +1,5 @@
-export declare type ConfigContext = {
-    mode: "production" | "development";
-};
-export declare function parseConfig(filePath: string, context: ConfigContext): Promise<{
+import type { Program } from "../build";
+export declare const readConfig: (program: Program) => Promise<{
     externalPackages?: string[] | undefined;
     minify?: boolean | undefined;
     treeShake?: boolean | undefined;

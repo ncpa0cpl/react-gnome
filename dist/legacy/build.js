@@ -46,51 +46,20 @@ var __async = (__this, __arguments, generator) => {
 // src/build.ts
 var build_exports = {};
 __export(build_exports, {
+  BuildProgram: () => BuildProgram,
+  StartProgram: () => StartProgram,
   build: () => build
 });
 module.exports = __toCommonJS(build_exports);
 var import_chalk = __toESM(require("chalk"));
 var import_clify = require("clify.js");
 var import_esbuild = __toESM(require("esbuild"));
-var import_fs = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
-var import_parse_config = require("./config/parse-config.js");
-var import_react_gnome_plugin = require("./esbuild-plugins/react-gnome/react-gnome-plugin.js");
 var import_start_app_plugin = require("./esbuild-plugins/start-app/start-app-plugin.js");
-var import_watch_logger_plugin = require("./esbuild-plugins/watch-logger/watch-logger-plugin.js");
-var isObject = (o) => typeof o === "object" && o != null;
-var isValidationError = (e) => {
-  return isObject(e) && e instanceof Error && "fieldPath" in e || false;
-};
-var handleBuildError = (e) => {
-  if (isValidationError(e)) {
-    console.error(
-      import_chalk.default.redBright(
-        `Config file is invalid. Property "${import_chalk.default.yellowBright(
-          e.fieldPath
-        )}" is incorrect.`
-      )
-    );
-  } else if (isObject(e) && e instanceof Error) {
-    console.error("Build failed due to an error: ", import_chalk.default.redBright(e.message));
-  } else {
-    console.error(import_chalk.default.redBright("Build failed due to an unknown error."));
-  }
-  process.exit(1);
-};
-var getPlugins = (type, config, watch) => {
-  const plugins = [(0, import_react_gnome_plugin.reactGnomePlugin)(config)];
-  if (type === "start") {
-    plugins.push((0, import_start_app_plugin.startAppPlugin)(import_path.default.resolve(process.cwd(), config.outDir)));
-  }
-  if (watch.value) {
-    plugins.push((0, import_watch_logger_plugin.watchLoggerPlugin)());
-  }
-  if (config.esbuildPlugins) {
-    plugins.push(...config.esbuildPlugins);
-  }
-  return plugins;
-};
+var import_get_plugins = require("./utils/get-plugins.js");
+var import_get_polyfills = require("./utils/get-polyfills.js");
+var import_handle_program_error = require("./utils/handle-program-error.js");
+var import_read_config = require("./utils/read-config.js");
 var WatchArgument = import_clify.Argument.define({
   flagChar: "-w",
   keyword: "--watch",
@@ -102,108 +71,127 @@ var BuildModeArgument = import_clify.Argument.define({
   dataType: "string",
   description: "The build mode, either 'development' or 'production'."
 });
+var Program = class {
+  constructor() {
+    this.cwd = process.cwd();
+    this.args = {
+      watch: new WatchArgument(),
+      mode: new BuildModeArgument()
+    };
+  }
+  get isDev() {
+    return this.args.mode.value === "development";
+  }
+  get watchMode() {
+    return this.args.watch.value || false;
+  }
+  run() {
+    return __async(this, null, function* () {
+      try {
+        this.config = yield (0, import_read_config.readConfig)(this);
+        return yield this.main(this);
+      } catch (e) {
+        (0, import_handle_program_error.handleProgramError)(e);
+      }
+    });
+  }
+  runWith(args, config, workingDir) {
+    return __async(this, null, function* () {
+      try {
+        if (workingDir) {
+          this.cwd = workingDir;
+        }
+        this.config = config;
+        for (const [key, value] of Object.entries(args)) {
+          const arg = this.args[key];
+          if (arg) {
+            arg.setDefault(value);
+          }
+        }
+        Object.freeze(this);
+        Object.freeze(this.args);
+        Object.freeze(this.config);
+        return yield this.main(this);
+      } catch (e) {
+        (0, import_handle_program_error.handleProgramError)(e);
+      }
+    });
+  }
+};
+var BuildProgram = class extends Program {
+  additionalPlugins() {
+    return {};
+  }
+  main() {
+    return __async(this, null, function* () {
+      var _a, _b;
+      if (this.watchMode) {
+        console.log(import_chalk.default.blueBright("Building in watch mode..."));
+      } else {
+        console.log(import_chalk.default.blueBright("Building..."));
+      }
+      yield import_esbuild.default.build({
+        target: "es6",
+        format: "esm",
+        inject: (0, import_get_polyfills.getPolyfills)(this),
+        entryPoints: [import_path.default.resolve(this.cwd, this.config.entrypoint)],
+        outfile: import_path.default.resolve(this.cwd, this.config.outDir, "index.js"),
+        plugins: (0, import_get_plugins.getPlugins)(this),
+        external: this.config.externalPackages,
+        minify: (_a = this.config.minify) != null ? _a : this.isDev ? false : true,
+        treeShaking: (_b = this.config.treeShake) != null ? _b : this.isDev ? false : true,
+        jsx: "transform",
+        keepNames: true,
+        bundle: true,
+        watch: this.watchMode
+      });
+      if (!this.watchMode) {
+        console.log(import_chalk.default.greenBright("Build completed."));
+      }
+    });
+  }
+};
+var StartProgram = class extends Program {
+  additionalPlugins() {
+    return {
+      before: [(0, import_start_app_plugin.startAppPlugin)(import_path.default.resolve(this.cwd, this.config.outDir))]
+    };
+  }
+  main() {
+    return __async(this, null, function* () {
+      var _a, _b;
+      if (this.watchMode) {
+        console.log(import_chalk.default.blueBright("Starting in watch mode."));
+      } else {
+        console.log(import_chalk.default.blueBright("Starting."));
+      }
+      yield import_esbuild.default.build({
+        target: "es6",
+        format: "esm",
+        inject: (0, import_get_polyfills.getPolyfills)(this),
+        entryPoints: [import_path.default.resolve(this.cwd, this.config.entrypoint)],
+        outfile: import_path.default.resolve(this.cwd, this.config.outDir, "index.js"),
+        plugins: (0, import_get_plugins.getPlugins)(this),
+        external: this.config.externalPackages,
+        minify: (_a = this.config.minify) != null ? _a : this.isDev ? false : true,
+        treeShaking: (_b = this.config.treeShake) != null ? _b : this.isDev ? false : true,
+        jsx: "transform",
+        keepNames: true,
+        bundle: true,
+        watch: this.watchMode
+      });
+    });
+  }
+};
 function build() {
   return __async(this, null, function* () {
     (0, import_clify.configure)((main) => {
       main.setDisplayName("react-gnome");
       main.setDescription("Build GTK apps with React.");
-      main.addSubCommand("build", () => {
-        const watch = new WatchArgument();
-        const mode = new BuildModeArgument();
-        return {
-          commandDescription: "Build and bundle the app into a single file.",
-          run() {
-            return __async(this, null, function* () {
-              var _a2, _b;
-              try {
-                const isDev = mode.value === "development";
-                const cwd = process.cwd();
-                const cwdFiles = import_fs.default.readdirSync(cwd);
-                const filename = cwdFiles.find(
-                  (f) => f.startsWith("react-gnome.config.")
-                );
-                if (!filename) {
-                  throw new Error("No config file found.");
-                }
-                const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename), {
-                  mode: isDev ? "development" : "production"
-                });
-                if (watch.value) {
-                  console.log(import_chalk.default.blueBright("Building in watch mode..."));
-                } else {
-                  console.log(import_chalk.default.blueBright("Building..."));
-                }
-                yield import_esbuild.default.build({
-                  target: "es6",
-                  format: "esm",
-                  entryPoints: [import_path.default.resolve(cwd, config.entrypoint)],
-                  outfile: import_path.default.resolve(cwd, config.outDir, "index.js"),
-                  plugins: getPlugins("build", config, watch),
-                  external: config.externalPackages,
-                  minify: (_a2 = config.minify) != null ? _a2 : isDev ? false : true,
-                  treeShaking: (_b = config.treeShake) != null ? _b : isDev ? false : true,
-                  jsx: "transform",
-                  keepNames: true,
-                  bundle: true,
-                  watch: watch.value
-                });
-                if (!watch.value) {
-                  console.log(import_chalk.default.greenBright("Build completed."));
-                }
-              } catch (e) {
-                handleBuildError(e);
-              }
-            });
-          }
-        };
-      });
-      main.addSubCommand("start", () => {
-        const watch = new WatchArgument();
-        const mode = new BuildModeArgument();
-        return {
-          commandDescription: "Build, bundle and open the app.",
-          run() {
-            return __async(this, null, function* () {
-              var _a2, _b;
-              try {
-                const isDev = mode.value === "development";
-                const cwd = process.cwd();
-                const cwdFiles = import_fs.default.readdirSync(cwd);
-                const filename = cwdFiles.find(
-                  (f) => f.startsWith("react-gnome.config.")
-                );
-                if (!filename) {
-                  throw new Error("No config file found.");
-                }
-                const config = yield (0, import_parse_config.parseConfig)(import_path.default.join(cwd, filename), {
-                  mode: isDev ? "development" : "production"
-                });
-                if (watch.value) {
-                  console.log(import_chalk.default.blueBright("Starting in watch mode."));
-                } else {
-                  console.log(import_chalk.default.blueBright("Starting."));
-                }
-                yield import_esbuild.default.build({
-                  target: "es6",
-                  format: "esm",
-                  entryPoints: [import_path.default.resolve(cwd, config.entrypoint)],
-                  outfile: import_path.default.resolve(cwd, config.outDir, "index.js"),
-                  plugins: getPlugins("start", config, watch),
-                  external: config.externalPackages,
-                  minify: (_a2 = config.minify) != null ? _a2 : isDev ? false : true,
-                  treeShaking: (_b = config.treeShake) != null ? _b : isDev ? false : true,
-                  jsx: "transform",
-                  keepNames: true,
-                  bundle: true,
-                  watch: watch.value
-                });
-              } catch (e) {
-                handleBuildError(e);
-              }
-            });
-          }
-        };
-      });
+      const buildCommand = main.addSubCommand("build", () => new BuildProgram());
+      const startCommand = main.addSubCommand("start", () => new StartProgram());
+      buildCommand.setDescription("Build and bundle the app into a single file.");
+      startCommand.setDescription("Build, bundle and open the app.");
     });
   });
 }
