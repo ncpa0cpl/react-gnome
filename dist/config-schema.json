@@ -111,6 +111,46 @@
       "required": [],
       "description": "The versions of the builtin libraries from the `gi://` namespace, that should be used in the generated bundle.",
       "additionalProperties": false
+    },
+    "polyfills": {
+      "type": "object",
+      "properties": {
+        "AbortController": {
+          "description": "Whether the polyfill for an `AbortController` should be included in the generated bundle. When enabled the `AbortController`, `AbortSignal` and `AbortError` classes will become available in the global scope.",
+          "type": "boolean"
+        },
+        "Blob": {
+          "description": "Whether the polyfill for a `Blob` should be included in the generated bundle. When enabled the `Blob` class will become available in the global scope.",
+          "type": "boolean"
+        },
+        "Buffer": {
+          "description": "Whether the polyfill for a `Buffer` should be included in the generated bundle. When enabled the `Buffer` class will become available in the global scope.",
+          "type": "boolean"
+        },
+        "FormData": {
+          "description": "Whether the polyfill for a `FormData` should be included in the generated bundle. When enabled the `FormData` class will become available in the global scope.",
+          "type": "boolean"
+        },
+        "URL": {
+          "description": "Whether the polyfill for a `URL` should be included in the generated bundle. When enabled the `URL` class will become available in the global scope.",
+          "type": "boolean"
+        },
+        "XMLHttpRequest": {
+          "description": "Whether the polyfill for a `XMLHttpRequest` should be included in the generated bundle. When enabled the `XMLHttpRequest` class will become available in the global scope.",
+          "type": "boolean"
+        },
+        "base64": {
+          "description": "Whether the polyfill for `atob()` and `btoa()` functions should be included in the generated bundle. When enabled the `atob()` and `btoa()` will become available in the global scope.",
+          "type": "boolean"
+        },
+        "fetch": {
+          "description": "Whether the polyfill for a `fetch()` function should be included in the generated bundle. When enabled the `fetch()` function will become available in the global scope.",
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "description": "Polyfills that should be included in the generated bundle.",
+      "additionalProperties": false
     }
   },
   "required": [

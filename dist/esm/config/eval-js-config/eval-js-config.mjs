@@ -19,7 +19,7 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/config/eval-js-config/eval-js-config.mjs.ts
+// src/config/eval-js-config/eval-js-config.esm.ts
 import path from "path";
 var evalJsConfigFile = (config) => __async(void 0, null, function* () {
   const ext = path.extname(config);

@@ -60,6 +60,18 @@ var ConfigSchema = import_dilswer.DataType.RecordOf({
       cairo: (0, import_dilswer.OptionalField)(import_dilswer.DataType.String),
       xlib: (0, import_dilswer.OptionalField)(import_dilswer.DataType.String)
     })
+  ),
+  polyfills: (0, import_dilswer.OptionalField)(
+    import_dilswer.DataType.RecordOf({
+      AbortController: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      Blob: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      Buffer: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      FormData: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      URL: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      XMLHttpRequest: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      base64: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean),
+      fetch: (0, import_dilswer.OptionalField)(import_dilswer.DataType.Boolean)
+    })
   )
 });
 ConfigSchema.recordOf.entrypoint.setDescription(
@@ -82,4 +94,32 @@ ConfigSchema.recordOf.esbuildPlugins.type.setDescription(
 );
 ConfigSchema.recordOf.giVersions.type.setDescription(
   "The versions of the builtin libraries from the `gi://` namespace, that should be used in the generated bundle."
+);
+var polyfills = ConfigSchema.recordOf.polyfills.type;
+polyfills.setDescription(
+  "Polyfills that should be included in the generated bundle."
+);
+polyfills.recordOf.AbortController.type.setDescription(
+  "Whether the polyfill for an `AbortController` should be included in the generated bundle. When enabled the `AbortController`, `AbortSignal` and `AbortError` classes will become available in the global scope."
+);
+polyfills.recordOf.Blob.type.setDescription(
+  "Whether the polyfill for a `Blob` should be included in the generated bundle. When enabled the `Blob` class will become available in the global scope."
+);
+polyfills.recordOf.Buffer.type.setDescription(
+  "Whether the polyfill for a `Buffer` should be included in the generated bundle. When enabled the `Buffer` class will become available in the global scope."
+);
+polyfills.recordOf.FormData.type.setDescription(
+  "Whether the polyfill for a `FormData` should be included in the generated bundle. When enabled the `FormData` class will become available in the global scope."
+);
+polyfills.recordOf.URL.type.setDescription(
+  "Whether the polyfill for a `URL` should be included in the generated bundle. When enabled the `URL` class will become available in the global scope."
+);
+polyfills.recordOf.XMLHttpRequest.type.setDescription(
+  "Whether the polyfill for a `XMLHttpRequest` should be included in the generated bundle. When enabled the `XMLHttpRequest` class will become available in the global scope."
+);
+polyfills.recordOf.base64.type.setDescription(
+  "Whether the polyfill for `atob()` and `btoa()` functions should be included in the generated bundle. When enabled the `atob()` and `btoa()` will become available in the global scope."
+);
+polyfills.recordOf.fetch.type.setDescription(
+  "Whether the polyfill for a `fetch()` function should be included in the generated bundle. When enabled the `fetch()` function will become available in the global scope."
 );

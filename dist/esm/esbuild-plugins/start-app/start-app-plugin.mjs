@@ -20,10 +20,11 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/esbuild-plugins/start-app/start-app-plugin.ts
-import { spawn } from "child_process";
+import { execSync, spawn } from "child_process";
 var startAppPlugin = (directory) => {
   let cleanup = () => {
   };
+  const pid = process.pid;
   return {
     name: "react-gnome-start-app-esbuild-plugin",
     setup(build) {
@@ -42,6 +43,12 @@ var startAppPlugin = (directory) => {
           console.error(data.toString());
         };
         const onExit = () => {
+          const subProcesses = execSync(`pgrep -P ${pid}`).toString().trim().split("\n");
+          for (const subProcess of subProcesses) {
+            const subProcessPid = parseInt(subProcess);
+            if (!isNaN(subProcessPid))
+              process.kill(subProcessPid, "SIGINT");
+          }
           process.kill(process.pid, "SIGINT");
         };
         (_a = child.stdout) == null ? void 0 : _a.on("data", onChildOutput);

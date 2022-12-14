@@ -105,6 +105,43 @@ export declare const ConfigSchema: import("dilswer").RecordOf<{
         }>;
         readonly required: false;
     };
+    polyfills: {
+        readonly type: import("dilswer").RecordOf<{
+            AbortController: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            Blob: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            Buffer: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            FormData: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            URL: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            XMLHttpRequest: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            base64: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+            fetch: {
+                readonly type: import("dilswer/dist/types/data-types/data-types").SimpleDataType<"boolean">;
+                readonly required: false;
+            };
+        }>;
+        readonly required: false;
+    };
 }>;
 export declare type Config = GetDataType<typeof ConfigSchema>;
 export declare type GiVersions = Config["giVersions"];
